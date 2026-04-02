@@ -1,0 +1,35 @@
+# ============================================================
+#  AI 활용 예측 및 분석 솔루션 개발 실습 — 패키지 목록
+#  설치 명령어: pip install -r requirements.txt
+#  antigravity / Google Colab / 로컬 Python 3.8+ 환경 지원
+# ============================================================
+
+# 데이터 처리
+pandas>=1.5.0
+numpy>=1.23.0
+
+# 머신러닝
+scikit-learn>=1.2.0
+
+# 모델 저장/로드
+joblib>=1.2.0
+
+# 시각화
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# 웹 앱 배포
+streamlit>=1.28.0
+
+# Jupyter 환경 (선택)
+jupyter>=1.0.0
+ipykernel>=6.0.0
+
+# 한글 폰트 (Linux/Colab 환경)
+# 설치 후 런타임 재시작 필요
+# !apt-get install -y fonts-nanum
+
+# ============================================================
+#  빠른 설치 (Google Colab / antigravity):
+#  !pip install pandas numpy scikit-learn joblib matplotlib seaborn streamlit
+# ============================================================
