@@ -63,15 +63,55 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── 헬퍼: 모델 로드 (캐시) ────────────────────────────
+# ── 헬퍼: 모델 로드 or 자동 학습 (캐시) ──────────────
 @st.cache_resource
 def load_model():
+    from sklearn.ensemble import GradientBoostingRegressor
     base  = os.path.dirname(os.path.abspath(__file__)) if '__file__' in dir() else '.'
     mpath = os.path.join(base, 'sales_model.pkl')
     fpath = os.path.join(base, 'features.pkl')
+
+    # pkl 파일이 있으면 바로 로드
     if os.path.exists(mpath) and os.path.exists(fpath):
         return joblib.load(mpath), joblib.load(fpath)
-    return None, None
+
+    # ── pkl 없으면 데이터로 즉시 학습 ──────────────────
+    for fname in ['data/sales_clean.csv', 'data/sample_sales.csv']:
+        p = os.path.join(base, fname)
+        if os.path.exists(p):
+            df = pd.read_csv(p)
+            break
+    else:
+        return None, None   # 데이터도 없으면 포기
+
+    # 결측치 처리
+    df['temp']       = df['temp'].fillna(df['temp'].median())
+    df['prev_sales'] = df['prev_sales'].fillna(df['prev_sales'].median())
+
+    # 피처 엔지니어링
+    df['weather_sunny'] = (df['weather'] == '맑음').astype(int)
+    df['weather_rain']  = (df['weather'] == '비').astype(int)
+    df['weather_snow']  = (df['weather'] == '눈').astype(int)
+    df['month']         = pd.to_datetime(df['date']).dt.month
+
+    FEATURES = ['temp','is_weekend','holiday','event','prev_sales',
+                'month','weather_sunny','weather_rain','weather_snow']
+
+    X = df[FEATURES]
+    y = df['sales']
+
+    model = GradientBoostingRegressor(n_estimators=200, learning_rate=0.05,
+                                      max_depth=4, random_state=42)
+    model.fit(X, y)
+
+    # 저장 시도 (권한 없어도 앱은 동작)
+    try:
+        joblib.dump(model,    mpath)
+        joblib.dump(FEATURES, fpath)
+    except Exception:
+        pass
+
+    return model, FEATURES
 
 @st.cache_data
 def load_data():
@@ -96,12 +136,9 @@ df_all = load_data()
 
 if model is None:
     st.error("""
-    ⚠️ **모델 파일을 찾을 수 없습니다.**
+    ⚠️ **데이터 파일(sample_sales.csv)을 찾을 수 없습니다.**
 
-    먼저 Step02를 실행해 모델을 학습하세요:
-    ```
-    python Step02_전처리_모델학습.py
-    ```
+    GitHub 저장소에 `data/sample_sales.csv` 파일이 포함되어 있는지 확인하세요.
     """)
     st.stop()
 
